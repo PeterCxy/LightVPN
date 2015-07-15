@@ -35,7 +35,7 @@ def clearClients():
 while True:
 	r, w, x = select.select([tunfd, udpfd], [], [], 1)
 	if tunfd in r:
-		data = os.read(tunfd, 2048)
+		data = os.read(tunfd, 32767)
 
 		dst = data[16:20]
 		if dst in clients:
@@ -49,7 +49,7 @@ while True:
 		clearClients()
 
 	if udpfd in r:
-		data, src = udp.recvfrom(2048)
+		data, src = udp.recvfrom(32767)
 		os.write(tunfd, data)
 		logging.info('connection from %s:%d' % src)
 		clients[data[12:16]] = {
