@@ -42,6 +42,15 @@ def iptables_reset(ip, device):
 	logging.info('Resetting iptables with %s' % cmd)
 	subprocess.check_call(cmd, shell=True)
 
+def fork_workers(workers):
+	if workers > 1:
+		for i in range(1, workers):
+			v = os.fork()
+			if v != 0:
+				# Then I'm a worker -_-
+				break;
+			logging.info('Statred worker %d' % i)
+
 def get_config():
 	logging.basicConfig(level=logging.INFO, format='%(levelname)-s: %(message)s')
 
@@ -68,5 +77,6 @@ def get_config():
 	config['port'] = int(config.get('port', '2333'))
 	config['output'] = config.get('output', 'eth0')
 	config['timeout'] = int(config.get('timeout', '600'))
+	config['workers'] = int(config.get('workers', '1'))
 
 	return config

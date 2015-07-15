@@ -16,6 +16,9 @@ udp.bind(('', 0))
 tunfd = tun.fileno()
 udpfd = udp.fileno()
 
+# Fork workers
+utils.fork_workers(config['workers'])
+
 # The main loop
 while True:
 	r, w, x = select.select([udpfd, tunfd], [], [], 1)

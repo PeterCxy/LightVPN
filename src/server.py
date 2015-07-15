@@ -20,6 +20,9 @@ logging.info('Listenning at %s:%d' % (config['server'], config['port']))
 tunfd = tun.fileno()
 udpfd = udp.fileno()
 
+# Fork workers
+utils.fork_workers(config['workers'])
+
 clients = {}
 
 # Must remove timeouted clients
