@@ -22,8 +22,15 @@ udpfd = udp.fileno()
 
 clients = {}
 
+# Must remove timeouted clients
 def clearClients():
 	cur = time.time();
+
+	for key in clients.key():
+		if cur - client[key]['time'] >= config['timeout']:
+			logging.info('client %s:%s timed out.' % client[key]['ip'])
+			del clients[key]
+
 
 while True:
 	r, w, x = select.select([tunfd, udpfd], [], [], 1)
@@ -33,6 +40,9 @@ while True:
 		dst = data[16:20]
 		if dst in clients:
 			udp.sendto(data, clients[dst]['ip'])
+
+			# Update the last active time
+			clients[dst]['time'] = time.time()
 		else:
 			logging.warn(dst + " not found")
 
@@ -43,7 +53,8 @@ while True:
 		os.write(tunfd, data)
 		logging.info('connection from %s:%d' % src)
 		clients[data[12:16]] = {
-			'ip': src
+			'ip': src,
+			'time': time.time()
 		}
 
 # Oops, loop cancelled. Something goes wrong

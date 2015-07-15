@@ -67,5 +67,6 @@ def get_config():
 	config['server'] = config.get('server', '0.0.0.0')
 	config['port'] = int(config.get('port', '2333'))
 	config['output'] = config.get('output', 'eth0')
+	config['timeout'] = int(config.get('timeout', '600'))
 
 	return config
