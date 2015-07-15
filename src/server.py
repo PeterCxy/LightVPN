@@ -52,7 +52,7 @@ def main_loop():
 		if udpfd in r:
 			data, src = udp.recvfrom(32767)
 			os.write(tunfd, data)
-			logging.info('connection from %s:%d' % src)
+			#logging.info('connection from %s:%d' % src)
 			clients[data[12:16]] = {
 				'ip': src,
 				'time': time.time()
