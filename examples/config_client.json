@@ -1,0 +1,6 @@
+{
+	"interface": "tun0",
+	"virtual_ip": "10.0.0.2",
+	"server": "ip_of_the_server",
+	"port": "2433"
+}

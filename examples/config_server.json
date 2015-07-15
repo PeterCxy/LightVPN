@@ -1,0 +1,7 @@
+{
+	"interface": "tun0",
+	"output": "eth0",
+	"virtual_ip": "10.0.0.1",
+	"server": "0.0.0.0",
+	"port": "2433"
+}
