@@ -50,15 +50,15 @@ def main_loop():
 			data, src = udp.recvfrom(32767)
 			os.write(tunfd, data)
 			#logging.info('connection from %s:%d' % src)
-                        c = data[12:16] # The source
-                        if c in clients.keys():
-                            clients[c]['time'] = time.time()
-                            clients[c]['ip'] = src
-                        else:
-		    	    clients[c] = {
-			    	'ip': src,
-				'time': time.time()
-		            }
+			c = data[12:16] # The source
+			if c in clients.keys():
+				clients[c]['time'] = time.time()
+				clients[c]['ip'] = src
+			else:
+				clients[c] = {
+					'ip': src,
+					'time': time.time()
+				}
 
 	# Oops, loop cancelled. Something goes wrong
 	utils.iptables_reset(config['virtual_ip'], config['output'])
