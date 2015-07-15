@@ -26,9 +26,9 @@ clients = {}
 def clearClients():
 	cur = time.time();
 
-	for key in clients.key():
-		if cur - client[key]['time'] >= config['timeout']:
-			logging.info('client %s:%s timed out.' % client[key]['ip'])
+	for key in clients.keys():
+		if cur - clients[key]['time'] >= config['timeout']:
+			logging.info('client %s:%s timed out.' % clients[key]['ip'])
 			del clients[key]
 
 
