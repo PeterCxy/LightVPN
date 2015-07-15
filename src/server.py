@@ -4,6 +4,7 @@ import time
 import utils
 import logging
 import os
+import threading
 
 config = utils.get_config()
 
@@ -20,9 +21,6 @@ logging.info('Listenning at %s:%d' % (config['server'], config['port']))
 tunfd = tun.fileno()
 udpfd = udp.fileno()
 
-# Fork workers
-utils.fork_workers(config['workers'])
-
 clients = {}
 
 # Must remove timeouted clients
@@ -34,31 +32,41 @@ def clearClients():
 			logging.info('client %s:%s timed out.' % clients[key]['ip'])
 			del clients[key]
 
+def main_loop():
+	while True:
+		r, w, x = select.select([tunfd, udpfd], [], [], 1)
+		if tunfd in r:
+			data = os.read(tunfd, 32767)
 
-while True:
-	r, w, x = select.select([tunfd, udpfd], [], [], 1)
-	if tunfd in r:
-		data = os.read(tunfd, 32767)
+			dst = data[16:20]
+			if dst in clients:
+				udp.sendto(data, clients[dst]['ip'])
 
-		dst = data[16:20]
-		if dst in clients:
-			udp.sendto(data, clients[dst]['ip'])
+				# Update the last active time
+				clients[dst]['time'] = time.time()
+			else:
+				logging.warn(dst + " not found")
 
-			# Update the last active time
-			clients[dst]['time'] = time.time()
-		else:
-			logging.warn(dst + " not found")
+				clearClients()
 
-		clearClients()
+		if udpfd in r:
+			data, src = udp.recvfrom(32767)
+			os.write(tunfd, data)
+			logging.info('connection from %s:%d' % src)
+			clients[data[12:16]] = {
+				'ip': src,
+				'time': time.time()
+			}
 
-	if udpfd in r:
-		data, src = udp.recvfrom(32767)
-		os.write(tunfd, data)
-		logging.info('connection from %s:%d' % src)
-		clients[data[12:16]] = {
-			'ip': src,
-			'time': time.time()
-		}
+	# Oops, loop cancelled. Something goes wrong
+	utils.iptables_reset(config['virtual_ip'], config['output'])
 
-# Oops, loop cancelled. Something goes wrong
-utils.iptables_reset(config['virtual_ip'], config['output'])
+
+# Start workers
+for i in range(1, config['workers']):
+	t = threading.Thread(target=main_loop)
+	t.daemon = True
+	t.start()
+	logging.info('Started worker %i' % i)
+
+main_loop()

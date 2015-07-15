@@ -3,6 +3,7 @@ import select
 import utils
 import logging
 import os
+import threading
 
 config = utils.get_config()
 
@@ -16,20 +17,27 @@ udp.bind(('', 0))
 tunfd = tun.fileno()
 udpfd = udp.fileno()
 
-# Fork workers
-utils.fork_workers(config['workers'])
+def main_loop():
+	# The main loop
+	while True:
+		r, w, x = select.select([udpfd, tunfd], [], [], 1)
 
-# The main loop
-while True:
-	r, w, x = select.select([udpfd, tunfd], [], [], 1)
+		if tunfd in r:
+			data = os.read(tunfd, 32767)
+			if len(data):
+				udp.sendto(data, (config['server'], config['port']))
+				logging.info('sent %d to %s:%d' % (len(data), config['server'], config['port']))
 
-	if tunfd in r:
-		data = os.read(tunfd, 32767)
-		if len(data):
-			udp.sendto(data, (config['server'], config['port']))
-			logging.info('sent %d to %s:%d' % (len(data), config['server'], config['port']))
+		if udpfd in r:
+			data, src = udp.recvfrom(32767)
+			os.write(tunfd, data)
+			logging.info('received %d' % len(data))
 
-	if udpfd in r:
-		data, src = udp.recvfrom(32767)
-		os.write(tunfd, data)
-		logging.info('received %d' % len(data))
+# Start workers
+for i in range(1, config['workers']):
+	t = threading.Thread(target=main_loop)
+	t.daemon = True
+	t.start()
+	logging.info('Started worker %i' % i)
+
+main_loop()
