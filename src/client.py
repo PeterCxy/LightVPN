@@ -46,11 +46,4 @@ def main_loop():
 			os.write(tunfd, cipher.decrypt(data))
 			#logging.info('received %d' % len(data))
 
-# Start workers (disabled temporarily)
-for i in range(1, config['workers']):
-	t = threading.Thread(target=main_loop)
-	t.daemon = True
-	t.start()
-	logging.info('Started worker %i' % i)
-
 main_loop()
