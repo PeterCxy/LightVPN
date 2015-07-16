@@ -5,6 +5,5 @@
 	"server": "0.0.0.0",
 	"port": "2433",
 	"timeout": "600",
-	"workers": "8",
 	"password": "test"
 }

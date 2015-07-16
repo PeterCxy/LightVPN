@@ -69,7 +69,6 @@ def get_config():
 	config['port'] = int(config.get('port', '2333'))
 	config['output'] = config.get('output', 'eth0')
 	config['timeout'] = int(config.get('timeout', '600'))
-	config['workers'] = int(config.get('workers', '1'))
 	config['password'] = crypto.md5(config.get('password', 'password'))
 
 	return config
