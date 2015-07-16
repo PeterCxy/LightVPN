@@ -15,6 +15,7 @@ utils.iptables_setup(config['virtual_ip'], config['output'])
 # Now let's bind a UDP socket
 udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 udp.bind((config['server'], config['port']))
+udp.setblocking(0)
 logging.info('Listenning at %s:%d' % (config['server'], config['port']))
 
 # Get descriptors
@@ -41,6 +42,7 @@ def main_loop():
 			dst = data[16:20]
 			if dst in clients.keys():
 				udp.sendto(data, clients[dst]['ip'])
+				logging.info('connection to %s:%d' % clients[dst]['ip'])
 			else:
 				logging.warn(dst + " not found")
 
@@ -49,7 +51,7 @@ def main_loop():
 		if udpfd in r:
 			data, src = udp.recvfrom(32767)
 			os.write(tunfd, data)
-			#logging.info('connection from %s:%d' % src)
+			logging.info('connection from %s:%d' % src)
 			c = data[12:16] # The source
 			if c in clients.keys():
 				clients[c]['time'] = time.time()
@@ -64,11 +66,11 @@ def main_loop():
 	utils.iptables_reset(config['virtual_ip'], config['output'])
 
 
-# Start workers
-for i in range(1, config['workers']):
-	t = threading.Thread(target=main_loop)
-	t.daemon = True
-	t.start()
-	logging.info('Started worker %i' % i)
+# Start workers (disabled temporarily)
+#for i in range(1, config['workers']):
+#	t = threading.Thread(target=main_loop)
+#	t.daemon = True
+#	t.start()
+#	logging.info('Started worker %i' % i)
 
 main_loop()

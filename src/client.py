@@ -12,6 +12,7 @@ tun = utils.tun_open(config['interface'], config['virtual_ip'])
 
 udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 udp.bind(('', 0))
+udp.setblocking(0)
 
 # Get descriptors
 tunfd = tun.fileno()
@@ -26,18 +27,18 @@ def main_loop():
 			data = os.read(tunfd, 32767)
 			if len(data):
 				udp.sendto(data, (config['server'], config['port']))
-				#logging.info('sent %d to %s:%d' % (len(data), config['server'], config['port']))
+				logging.info('sent %d to %s:%d' % (len(data), config['server'], config['port']))
 
 		if udpfd in r:
 			data, src = udp.recvfrom(32767)
 			os.write(tunfd, data)
-			#logging.info('received %d' % len(data))
+			logging.info('received %d' % len(data))
 
-# Start workers
-for i in range(1, config['workers']):
-	t = threading.Thread(target=main_loop)
-	t.daemon = True
-	t.start()
-	logging.info('Started worker %i' % i)
+# Start workers (disabled temporarily)
+#for i in range(1, config['workers']):
+#	t = threading.Thread(target=main_loop)
+#	t.daemon = True
+#	t.start()
+#	logging.info('Started worker %i' % i)
 
 main_loop()

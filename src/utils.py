@@ -17,7 +17,7 @@ IFF_NO_PI = 0x1000
 
 def tun_open(name, ip):
 	# Open the tun device first
-	tun = open('/dev/net/tun', 'r+b')
+	tun = open('/dev/net/tun', 'r+w')
 
 	# Create the interface
 	ifr = struct.pack('16sH', name, IFF_TUN | IFF_NO_PI)
