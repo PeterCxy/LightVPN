@@ -8,6 +8,7 @@ import subprocess
 import sys
 import json
 import logging
+import crypto
 
 TUNSETIFF = 0x400454ca
 TUNSETOWNER = TUNSETIFF + 2
@@ -69,5 +70,6 @@ def get_config():
 	config['output'] = config.get('output', 'eth0')
 	config['timeout'] = int(config.get('timeout', '600'))
 	config['workers'] = int(config.get('workers', '1'))
+	config['password'] = crypto.md5(config.get('password', 'password'))
 
 	return config

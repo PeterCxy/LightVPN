@@ -5,6 +5,7 @@ import utils
 import logging
 import os
 import threading
+from crypto import AESCipher
 
 config = utils.get_config()
 
@@ -22,6 +23,9 @@ logging.info('Listenning at %s:%d' % (config['server'], config['port']))
 tunfd = tun.fileno()
 udpfd = udp.fileno()
 
+# Create the cipher
+cipher = AESCipher(config['password'])
+
 clients = {}
 
 # Must remove timeouted clients
@@ -37,21 +41,31 @@ def main_loop():
 	while True:
 		r, w, x = select.select([tunfd, udpfd], [], [], 1)
 		if tunfd in r:
-			data = os.read(tunfd, 32767)
+			try:
+				data = os.read(tunfd, 32767)
+			except:
+				# If resource busy, just skip this even
+				continue
 
 			dst = data[16:20]
 			if dst in clients.keys():
-				udp.sendto(data, clients[dst]['ip'])
-				logging.info('connection to %s:%d' % clients[dst]['ip'])
+				udp.sendto(cipher.encrypt(data), clients[dst]['ip'])
+				#logging.info('connection to %s:%d' % clients[dst]['ip'])
 			else:
 				logging.warn(dst + " not found")
 
 			clearClients()
 
 		if udpfd in r:
-			data, src = udp.recvfrom(32767)
+			try:
+				data, src = udp.recvfrom(32767)
+			except:
+				# If resource busy, just skip this event
+				continue
+
+			data = cipher.decrypt(data)
 			os.write(tunfd, data)
-			logging.info('connection from %s:%d' % src)
+			#logging.info('connection from %s:%d' % src)
 			c = data[12:16] # The source
 			if c in clients.keys():
 				clients[c]['time'] = time.time()
@@ -67,10 +81,10 @@ def main_loop():
 
 
 # Start workers (disabled temporarily)
-#for i in range(1, config['workers']):
-#	t = threading.Thread(target=main_loop)
-#	t.daemon = True
-#	t.start()
-#	logging.info('Started worker %i' % i)
+for i in range(1, config['workers']):
+	t = threading.Thread(target=main_loop)
+	t.daemon = True
+	t.start()
+	logging.info('Started worker %i' % i)
 
 main_loop()
